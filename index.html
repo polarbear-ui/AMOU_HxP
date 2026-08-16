@@ -19,7 +19,7 @@
             overflow: hidden;
         }
 
-        /* 왼쪽 사이드바 목록창 */
+        /* 왼쪽 사이드바 목록창 (PC 기본 기준) */
         #sidebar {
             width: 380px;
             min-width: 380px;
@@ -101,7 +101,7 @@
             text-overflow: ellipsis;
         }
 
-        /* 오른쪽 지도 영역 */
+        /* 오른쪽 지도 영역 (PC 기본 기준) */
         #map-container {
             flex-grow: 1;
             height: 100vh;
@@ -214,9 +214,64 @@
             font-size: 13px;
             cursor: pointer;
         }
+
+        /* =========================================
+           📱 모바일 반응형 스타일 (화면 너비 768px 이하)
+           ========================================= */
+        @media (max-width: 768px) {
+            body, html {
+                flex-direction: column-reverse; /* 모바일에서는 지도를 위로, 목록을 아래로 배치 */
+            }
+
+            #sidebar {
+                width: 100%;
+                min-width: 100%;
+                height: 40vh; /* 화면 하단 40%만 차지 */
+                border-right: none;
+                border-top: 1px solid #EAE8E1;
+            }
+
+            #map-container {
+                width: 100%;
+                height: 60vh; /* 화면 상단 60% 차지 */
+            }
+
+            .sidebar-header {
+                padding: 15px 20px; /* 헤더 여백 축소 */
+            }
+
+            .sidebar-header h1 {
+                font-size: 18px;
+            }
+
+            .index-item {
+                padding: 15px 20px; /* 리스트 여백 축소 */
+            }
+
+            .item-title {
+                margin-bottom: 0; /* 미리보기가 사라지므로 여백 제거 */
+            }
+
+            /* 유저 요청: 모바일에서는 메모 본문 미리보기 숨기기 */
+            .item-preview {
+                display: none; 
+            }
+
+            /* 모바일에서 팝업창 크기 최적화 */
+            .leaflet-popup-content {
+                width: 280px !important;
+            }
+            .amou-popup {
+                padding: 15px;
+            }
+            .amou-text {
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- HTML 구조 변경 없음 (CSS flex-direction: column-reverse로 모바일에서 순서 자동 변경) -->
     <div id="sidebar">
         <div class="sidebar-header">
             <h1>A MAP OF US</h1>
@@ -243,9 +298,15 @@
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
+        // 컨테이너 크기 변경 시 Leaflet이 타일과 화면을 다시 계산하도록 처리
         setTimeout(() => {
             map.invalidateSize();
         }, 100);
+
+        // 윈도우 리사이즈(PC<->모바일 변환) 시 맵 사이즈 재조정
+        window.addEventListener('resize', () => {
+            map.invalidateSize();
+        });
 
         const pinkDotIcon = L.divIcon({
             className: 'custom-div-icon',
@@ -255,7 +316,7 @@
             popupAnchor: [0, -10]
         });
 
-        // 2025년과 2026년으로 연도 구분 적용
+        // 2025년과 2026년으로 연도 구분 적용된 데이터
         const data = [
             { lat: 37.5216, lng: 126.9242, loc: "대한민국 서울, 유스티티아 본부 중앙 카페", date: "2025. 03. 14", text: "여기서 처음 봤다. 팀장 새끼 주겠다고 마지막 남은 케이크를 채가는 맹랑한 고양이. 씨발, 무슨 이런 또라이가 다 있나 싶었다. 내 눈앞에서 마지막 남은 케이크를 채가는 간 큰 일반인이라니. 돈다발을 쥐여주고 나서야 겨우 케이크를 손에 넣었지만, 이상하게 기분이 더러웠다." },
             { lat: 37.3827, lng: 126.6399, loc: "대한민국 인천, 연수구 송도동", date: "2025. 04. 25", text: "팔이 잘려나갔는데, 아프다는 생각보다 네 얼굴이 먼저 보였다. 잔뜩 일그러져서, 금방이라도 울 것처럼 화를 내던 얼굴. 그때 알았다. 나는 네가 나 때문에 화내는 게 좋았다. 미친놈처럼. 다음에도 또 걱정해달라고 지껄였던가. 진심이었다." },
@@ -323,6 +384,7 @@
                 document.querySelectorAll('.index-item').forEach(el => el.classList.remove('active'));
                 indexItem.classList.add('active');
 
+                // 모바일 환경을 고려하여 마커 클릭 시 살짝 위쪽으로 중심을 맞춰 팝업이 잘리게 않게 조정
                 map.flyTo([item.lat, item.lng], 16, {
                     animate: true,
                     duration: 1
